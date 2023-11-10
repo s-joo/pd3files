@@ -1,402 +1,1057 @@
 <?php
 error_reporting(0);
 
-$ttl_file = file_get_contents("php://stdin");
-$ttl_file = str_replace(array("\r\n", "\r", "\n"), "\n", $ttl_file);
-$ttl_array = explode(".\n", $ttl_file);
-$host="digital-triplet.net";
-$prefix_data = array();
+$xml_file_name = file_get_contents('php://stdin');
+$xmlfilename = "./temp.xml".strtotime("now");
+file_put_contents($xmlfilename, $inputXML);
 
-//arrow変換用
-function makexml4arc($ttltext,$flowtype){
-		$arc_array = array();
-		$arc_array=explode(";\n",trim($ttltext));
+$PD3xml = simplexml_load_file($xmlfilename);
+$xml_file_string = file_get_contents($xmlfilename);
 
-			for($k=1;$k<count($arc_array);$k++){	
-			if(preg_match("/pd3:id/", $arc_array[$k])){	
-							$arc_id = trim(str_replace("pd3:id \"","",$arc_array[$k]));
-							$arc_id = trim(str_replace("\"","",$arc_id));
-				}elseif(preg_match("/pd3:layer/", $arc_array[$k])){	
-							$arc_layer = trim(str_replace("pd3:layer \"","",$arc_array[$k]));
-							$arc_layer = trim(str_replace("\"","",$arc_layer));
-				}elseif(preg_match("/pd3:value/", $arc_array[$k])){	
-							$arc_value = trim(str_replace("pd3:value \"","",$arc_array[$k]));
-							$arc_value = trim(str_replace("\"","",$arc_value));
-				}elseif(preg_match("/pd3:content/", $arc_array[$k])){	
-							$arc_tooltip = trim(str_replace("pd3:content \"","",$arc_array[$k]));
-							$arc_tooltip = trim(str_replace("\"","",$arc_tooltip));
-							$arc_tooltip = trim(str_replace("\\n","&#xa;",$arc_tooltip));
-				}elseif(preg_match("/pd3:dparent/", $arc_array[$k])){	
-							$arc_parent = trim(str_replace("pd3:dparent ","",$arc_array[$k]));
-							$arc_parent = trim(preg_replace('/.*?:/s', '', str_replace("\"","",$arc_parent)));
-				}elseif(preg_match("/pd3:source/", $arc_array[$k])){	
-							$arc_source = trim(str_replace("pd3:source ","",$arc_array[$k]));
-							$arc_source = trim(preg_replace('/.*?:/s', '', str_replace("\"","",$arc_source)));							
-				}elseif(preg_match("/pd3:target/", $arc_array[$k])){	
-							$arc_target = trim(str_replace("pd3:target ","",$arc_array[$k]));
-							$arc_target = trim(preg_replace('/.*?:/s', '', str_replace("\"","",$arc_target)));
-				}elseif(preg_match("/pd3:entryX/", $arc_array[$k])){	
-							$arc_entryX = trim(str_replace("pd3:entryX \"","",$arc_array[$k]));
-							$arc_entryX = trim(str_replace("\"","",$arc_entryX));
-				}elseif(preg_match("/pd3:entryY/", $arc_array[$k])){	
-							$arc_entryY = trim(str_replace("pd3:entryY \"","",$arc_array[$k]));
-							$arc_entryY = trim(str_replace("\"","",$arc_entryY));
-				}elseif(preg_match("/pd3:entryDx/", $arc_array[$k])){	
-							$arc_entryDx = trim(str_replace("pd3:entryDx \"","",$arc_array[$k]));
-							$arc_entryDx = trim(str_replace("\"","",$arc_entryDx));
-				}elseif(preg_match("/pd3:entryDy/", $arc_array[$k])){	
-							$arc_entryDy = trim(str_replace("pd3:entryDy \"","",$arc_array[$k]));
-							$arc_entryDy = trim(str_replace("\"","",$arc_entryDy));
-				}elseif(preg_match("/pd3:exitX/", $arc_array[$k])){	
-							$arc_exitX = trim(str_replace("pd3:exitX \"","",$arc_array[$k]));
-							$arc_exitX = trim(str_replace("\"","",$arc_exitX));
-				}elseif(preg_match("/pd3:exitY/", $arc_array[$k])){	
-							$arc_exitY = trim(str_replace("pd3:exitY \"","",$arc_array[$k]));
-							$arc_exitY = trim(str_replace("\"","",$arc_exitY));
-				}elseif(preg_match("/pd3:exitDx/", $arc_array[$k])){	
-							$arc_exitDx = trim(str_replace("pd3:exitDx \"","",$arc_array[$k]));
-							$arc_exitDx = trim(str_replace("\"","",$arc_exitDx));
-				}elseif(preg_match("/pd3:exitDy/", $arc_array[$k])){	
-							$arc_exitDy = trim(str_replace("pd3:exitDy \"","",$arc_array[$k]));
-							$arc_exitDy = trim(str_replace("\"","",$arc_exitDy));
-				}elseif(preg_match("/pd3:geometry/", $arc_array[$k])){	
-							$arc_geometry = trim(str_replace("pd3:geometry \"","",$arc_array[$k]));
-							$arc_geometry = trim(str_replace("\"","",$arc_geometry));
-				}
-		}//for k	
-
-		
-		if($arc_layer == "topic"){$fillColor="#ffe6cc";
-											  $strokeColor="#d79b00";
-		}elseif($arc_layer == "info"){$fillColor="#dae8fc";
-											  $strokeColor="#6c8ebf";
-		}elseif($arc_layer == "phys"){$fillColor="#d5e8d4";
-											  $strokeColor="#82b366";
-		}
-		if($flowtype == "information"){ $textalign="center";}else{$textalign="left";}
-		if($flowtype == "annotation"){ $flowtype = $flowtype.";dashed=1";}		
-		
-		$xml_text = "";
-		
-		$style_text = "endArrow=block;rounded=0;endFill=1;html=1;align=".$textalign.";verticalAlign=middle;pd3layer=".$arc_layer.";pd3type=arc;arctype=".$flowtype.";fillColor=".$fillColor.";strokeColor=".$strokeColor.";fontSize=14;";
-		if($arc_exitX != ''){$style_text.="exitX=".$arc_exitX.";";}	
-		if($arc_exitY != ''){$style_text.="exitY=".$arc_exitY.";";}	
-		if($arc_exitDx != ''){$style_text.="exitDx=".$arc_exitDx.";";}	
-		if($arc_exitDy != ''){$style_text.="exitDy=".$arc_exitDy.";";}
-		if($arc_entryX != ''){$style_text.="entryX=".$arc_entryX.";";}	
-		if($arc_entryY != ''){$style_text.="entryY=".$arc_entryY.";";}	
-		if($arc_entryDx != ''){$style_text.="entryDx=".$arc_entryDx.";";}	
-		if($arc_entryDy != ''){$style_text.="entryDy=".$arc_entryDy.";";}	
-		
-		$xml_text = "<object label=\"".$arc_value."\" id=\"".$arc_id."\""; 
-		if($arc_tooltip){$xml_text .= " tooltip=\"".$arc_tooltip."\"";}
-		$xml_text .= ">\n";
-		$xml_text .= "<mxCell style=\"".$style_text."\" edge=\"1\"";
-		if($arc_parent){$xml_text .= " parent=\"".$arc_parent."\"";}
-		if($arc_source){$xml_text .= " source=\"".$arc_source."\"";}
-		if($arc_target){$xml_text .= " target=\"".$arc_target."\"";}
-		$xml_text .= ">\n";
-		if($arc_geometry){$xml_text .= hex2bin($arc_geometry);}
-		$xml_text .= "</mxCell>\n";
-		$xml_text .= "</object>\n";
-	return $xml_text;
-}
-
-//object変換用
-function makexml4object($ttltext,$objecttype){
-		$object_array = array();
-		$object_array=explode(";\n",trim($ttltext));
-
-			for($k=1;$k<count($object_array);$k++){	
-			if(preg_match("/pd3:id/", $object_array[$k])){	
-							$object_id = trim(str_replace("pd3:id \"","",$object_array[$k]));
-							$object_id = trim(str_replace("\"","",$object_id));
-				}elseif(preg_match("/pd3:layer/", $object_array[$k])){	
-							$object_layer = trim(str_replace("pd3:layer \"","",$object_array[$k]));
-							$object_layer = trim(str_replace("\"","",$object_layer));
-				}elseif(preg_match("/pd3:value/", $object_array[$k])){	
-							$object_value = trim(str_replace("pd3:value \"","",$object_array[$k]));
-							$object_value = trim(str_replace("\"","",$object_value));
-				}elseif(preg_match("/pd3:content/", $object_array[$k])){	
-							$object_tooltip = trim(str_replace("pd3:content \"","",$object_array[$k]));
-							$object_tooltip = trim(str_replace("\"","",$object_tooltip));
-							$object_tooltip = trim(str_replace("\\n","&#xa;",$object_tooltip));							
-				}elseif(preg_match("/pd3:dparent/", $object_array[$k])){	
-							$object_parent = trim(str_replace("pd3:dparent ","",$object_array[$k]));
-							$object_parent = trim(preg_replace('/.*?:/s', '', str_replace("\"","",$object_parent)));
-				}elseif(preg_match("/pd3:geometry/", $object_array[$k])){	
-							$object_geometry = trim(str_replace("pd3:geometry \"","",$object_array[$k]));
-							$object_geometry = trim(str_replace("\"","",$object_geometry));
-				}
-		}//for k	
-		
-		if($object_layer == "topic"){
-														  $strokeColor="#d79b00";
-		}elseif($object_layer == "info"){
-												  		$strokeColor="#6c8ebf";
-		}elseif($object_layer == "phys"){
-											  			$strokeColor="#82b366";
-		}
-		
-		$xml_text = "";
-		if($objecttype == 'tool'){
-			$style_text = "rounded=0;whiteSpace=wrap;html=1;pd3layer=".$object_layer.";pd3type=tool;strokeColor=".$strokeColor.";dashed=1;fontSize=14;fillColor=none;strokeWidth=1;";
-		}elseif($objecttype == 'document'){
-			$style_text = "rounded=0;whiteSpace=wrap;html=1;pd3layer=".$object_layer.";pd3type=document;strokeColor=".$strokeColor.";dashed=1;fontSize=14;fillColor=none;strokeWidth=1;";
-		}elseif($objecttype == 'engineer'){
-			$style_text="labelPosition=center;html=1;shape=mxgraph.basic.frame;dx=3;pd3layer=".$object_layer.";pd3type=engineer;strokeColor=".$strokeColor.";fontSize=14;fillColor=none;strokeWidth=1;";
-		}
-		
-		$xml_text = "<object label=\"".$object_value."\" id=\"".$object_id."\"";
-		if($object_tooltip){$xml_text .= " tooltip=\"".$object_tooltip."\"";}
-		$xml_text .= ">\n";
-		$xml_text .= "<mxCell style=\"".$style_text."\" vertex=\"1\"";
-		if($object_parent){$xml_text .= " parent=\"".$object_parent."\"";}
-		$xml_text .= ">\n";
-		if($object_geometry){$xml_text .= hex2bin($object_geometry);}
-		$xml_text .= "</mxCell>\n";
-		$xml_text .= "</object>\n";
-	return $xml_text;
-}
+$pd3xmlData = array();
+$mModified = $PD3xml -> attributes() -> modified;
+$mDiagramName = $PD3xml -> diagram -> attributes() -> name;
+$mDiagramID = $PD3xml -> diagram -> attributes() -> id;
 
 
-for($i=0;$i<count($ttl_array);$i++){
-	$ttl_array[$i] = trim($ttl_array[$i]);
+//UserObjectタグの場合
+foreach($PD3xml->diagram->mxGraphModel->root->UserObject as $UserObject):
 
-	if(preg_match("/@prefix /", $ttl_array[$i])){
-		//prefixの場合
-		$prefix=explode("<",$ttl_array[$i]);
-		$prefix_name_temp=str_replace("@prefix","",trim($prefix[0]));
-		$prefix_name_temp=str_replace(":","",trim($prefix_name_temp));
-		$uri_temp=str_replace(">","",trim($prefix[1]));		
-		$prefix_data[]=['prefix_name' => (string)$prefix_name_temp,'prefix_uri' => (string)$uri_temp];
-	}elseif(preg_match("/a pd3:EngineeringProcess/", $ttl_array[$i])){
-		
-	//EngineeringProcessの場合
-		$ep_array = array();
-		$ep_array=explode(";\n",trim($ttl_array[$i]));
-		$prefix=trim(substr($ep_array[0], 0, strcspn($ep_array[0],':'))); //prefix確定
-		for($j=1;$j<count($ep_array);$j++){
-			$ep_array[$j]=substr(trim($ep_array[$j]),0,-1);
-				
-				if(preg_match("/pd3:diagramName/", $ep_array[$j])){
-							$DiagramName = str_replace("pd3:diagramName \"","",$ep_array[$j]);
-				}elseif(preg_match("/pd3:diagramId/", $ep_array[$j])){	
-							$DiagramId = str_replace("pd3:diagramId \"","",$ep_array[$j]);
-				}elseif(preg_match("/dcterms:title/", $ep_array[$j])){	
-							$Title = str_replace("dcterms:title \"","",$ep_array[$j]);
-				}elseif(preg_match("/dcterms:creator/", $ep_array[$j])){	
-							$Creator = str_replace("dcterms:creator \"","",$ep_array[$j]);
-				}elseif(preg_match("/dcterms:description/", $ep_array[$j])){	
-							$Description = str_replace("dcterms:description \"","",$ep_array[$j]);
-				}elseif(preg_match("/pd3:epType/", $ep_array[$j])){	
-							$Eptype = str_replace("pd3:epType \"","",$ep_array[$j]);
-				}elseif(preg_match("/dcterms:modified/", $ep_array[$j])){	
-							$Modified = str_replace("dcterms:modified \"","",$ep_array[$j]);
-				}elseif(preg_match("/pd3:id/", $ep_array[$j])){	
-							$ep_id = trim(str_replace("pd3:id \"","",$ep_array[$j]));
-							$ep_id = trim(str_replace("\"","",$ep_id));
-				}
-						
-					}	
-					
-	}elseif(preg_match("/a pd3:Entity;/", $ttl_array[$i])){
-		$entity_id = "";
-		$entity_parent = "";
-		$entity_array = array();
-		$entity_array=explode(";\n",trim($ttl_array[$i]));
-		for($k=1;$k<count($entity_array);$k++){	
-			if(preg_match("/pd3:id/", $entity_array[$k])){
-							$entity_id = trim(str_replace("pd3:id \"","",$entity_array[$k]));
-							$entity_id = trim(str_replace("\"","",$entity_id));
-							
-			}
-			if(preg_match("/pd3:dparent/", $entity_array[$k])){
-							$entity_parent = trim(str_replace("pd3:dparent ","",$entity_array[$k]));
-							$entity_parent = trim(preg_replace('/.*?:/s', '', str_replace("\"","",$entity_parent)));
+		//変数初期化
+ 		$pd3layer="";
+ 		$pd3type="";
+ 		$pd3action ="";
+ 		$pd3action_status ="";
+ 		$arctype="";
+ 		$endArrow="";
+ 		$containertype="";
+ 		$pd3parent ="";
+	    $pd3value = htmlspecialchars($UserObject['label']);
+ 		$pd3target="";
+ 		$pd3source="";
+		$pd3id = $UserObject['id'];
+		$entryX = "";
+		$entryY="";
+		$entryDx = "";
+		$entryDy="";
+		$exitX = "";
+		$exitY="";
+		$exitDx = "";
+		$exitDy="";
+		$errorcheck=0;
+		$pd3tooltip=str_replace(array("\r\n", "\r", "\n"),"\\n",$UserObject['tooltip']);
 
-			}
-		}
+	//UserObjectの場合
+    foreach ($UserObject as $key => $mxCell) {
 
-		if($entity_id != '0'){
-			$putXML_middle .= "<mxCell id=\"".$entity_id."\"";
-				if($entity_parent != ''){
-						$putXML_middle .= " parent=\"".$entity_parent."\"";
-				}
-		
-		 	$putXML_middle .= " />\n"; 	
-			}
+	if($mxCell['style']){
+										$styleArray = array();			
+										$styleArray = explode(";",$mxCell['style']);
+										for($i = 0; $i < count($styleArray);$i++){
+											if($styleArray[$i]){
+												
+											$stylePropertyArray = array();
+											$stylePropertyArray = explode("=",$styleArray[$i]);
+												$stylePeoperty[]=$stylePropertyArray[0];		
+											if (preg_match("/URI/", $stylePropertyArray[0])){
+																$mURI = str_replace("URI=","",$styleArray[$i]);
+											}
+											if (preg_match("/prefix/", $stylePropertyArray[0])){
+																$mprefix = str_replace("prefix=","",$styleArray[$i]);
+											}
+											if (preg_match("/title/", $stylePropertyArray[0])){
+																$mtitle = str_replace("title=","",$styleArray[$i]);
+											}
+											if (preg_match("/creator/", $stylePropertyArray[0])){
+																$mcreator = str_replace("creator=","",$styleArray[$i]);
+											}
+											if (preg_match("/eptype/", $stylePropertyArray[0])){
+																$eptype = str_replace("eptype=","",$styleArray[$i]);
+											}
+											if (preg_match("/description/", $stylePropertyArray[0])){
+																$mdescription = str_replace("description=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3layer/", $stylePropertyArray[0])){
+																$pd3layer = str_replace("pd3layer=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3type/", $stylePropertyArray[0])){
+																$pd3type = str_replace("pd3type=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3action/", $stylePropertyArray[0])) {
+																$pd3action = str_replace("pd3action=","",$styleArray[$i]);
 
-	//Actionの場合
-	}elseif(preg_match("/a pd3:Action;/", $ttl_array[$i])){
-			$action_type="";
-			$action_value="";
-			$action_layer="";
-			$action_tooltip="";
-			$action_parent="";			
-		$action_array = array();
-		$action_array=explode(";\n",trim($ttl_array[$i]));
-		for($k=1;$k<count($action_array);$k++){	
-		
+																switch ($pd3action){
+																			case 'ECDP':
+																			    $pd3action_status = 'define problem';
+  																				break;
+																			case 'ECCAI':
+																			    $pd3action_status = 'collect/analyze information';
+  																				break;
+																			case 'ECGH':
+																			    $pd3action_status = 'generate hypothesis';
+  																				break;
+																			case 'ECESI':
+																			    $pd3action_status = 'evaluate/select information';
+  																				break;
+																			case 'ECEX':
+																			    $pd3action_status = 'execute';
+  																				break;
+  																}
 
-				if(preg_match("/pd3:actionType/", $action_array[$k])){
-							$action_type = trim(str_replace("pd3:actionType \"","",$action_array[$k]));
-							$action_type = trim(str_replace("\"","",$action_type));
-				}elseif(preg_match("/pd3:id/", $action_array[$k])){	
-							$action_id = trim(str_replace("pd3:id \"","",$action_array[$k]));
-							$action_id = trim(str_replace("\"","",$action_id));
-				}elseif(preg_match("/pd3:layer/", $action_array[$k])){	
-							$action_layer = trim(str_replace("pd3:layer \"","",$action_array[$k]));
-							$action_layer = trim(str_replace("\"","",$action_layer));
-				}elseif(preg_match("/pd3:value/", $action_array[$k])){	
-							$action_value = trim(str_replace("pd3:value \"","",$action_array[$k]));
-							$action_value = trim(str_replace("\"","",$action_value));
-				}elseif(preg_match("/pd3:content/", $action_array[$k])){	
-							$action_tooltip = trim(str_replace("pd3:content \"","",$action_array[$k]));
-							$action_tooltip = trim(str_replace("\"","",$action_tooltip));
-							$action_tooltip = trim(str_replace("\\n","&#xa;",$action_tooltip));
-				}elseif(preg_match("/pd3:dparent/", $action_array[$k])){	
-							$action_parent = trim(str_replace("pd3:dparent \"","",$action_array[$k]));
-							$action_parent = trim(preg_replace('/.*?:/s', '', str_replace("\"","",$action_parent)));
-				}elseif(preg_match("/pd3:geometry/", $action_array[$k])){	
-							$action_geometry = trim(str_replace("pd3:geometry \"","",$action_array[$k]));
-							$action_geometry = trim(str_replace("\"","",$action_geometry));
-				}
-		}
-				
-		if($action_layer == "topic"){$fillColor="#ffe6cc";
-											  $strokeColor="#d79b00";
-		}elseif($action_layer == "info"){$fillColor="#dae8fc";
-											  $strokeColor="#6c8ebf";
-		}elseif($action_layer == "phys"){$fillColor="#d5e8d4";
-											  $strokeColor="#82b366";
-		}
-		if($action_value == 'Start'){
-					$dashed = "dashed=1;pd3action=start;";	
-		}elseif($action_value == 'End'){
-					$dashed = "dashed=1;pd3action=end;";
-		}else{
-			$dashed = "";
-		} //start,endのstyle追加
+											}
+											if (preg_match("/arctype/", $stylePropertyArray[0])) {
+																$arctype = str_replace("arctype=","",$styleArray[$i]);
+											}		
+											if (preg_match("/endArrow/", $stylePropertyArray[0])) {
+																$endArrow = str_replace("endArrow=","",$styleArray[$i]);
+											}											
+											if (preg_match("/containertype/", $stylePropertyArray[0])) {
+																$containertype = str_replace("containertype=","",$styleArray[$i]);
+											}		
+																						
+											if (preg_match("/entryX/", $stylePropertyArray[0])) {
+																$entryX = str_replace("entryX=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/entryY/", $stylePropertyArray[0])) {
+																$entryY = str_replace("entryY=","",$styleArray[$i]);
+											}
+											
+											if (preg_match("/entryDx/", $stylePropertyArray[0])) {
+																$entryDx = str_replace("entryDx=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/entryDy/", $stylePropertyArray[0])) {
+																$entryDy = str_replace("entryDy=","",$styleArray[$i]);
+											}	
+												
+											if (preg_match("/exitX/", $stylePropertyArray[0])) {
+																$exitX = str_replace("exitX=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/exitY/", $stylePropertyArray[0])) {
+																$exitY = str_replace("exitY=","",$styleArray[$i]);
+											}
+											if (preg_match("/exitDx/", $stylePropertyArray[0])) {
+																$exitDx = str_replace("exitDx=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/exitDy/", $stylePropertyArray[0])) {
+																$exitDy = str_replace("exitDy=","",$styleArray[$i]);
+											}	
+											
+											 }//if()
+											} //for
+																				
+} //if_mxCell
+
+	if($mxCell['parent']){$pd3parent = $mxCell['parent'];}																
+	if($mxCell['source']){$pd3source = $mxCell['source'];	}																	
+	if($mxCell['target']){$pd3target = $mxCell['target'];}
+
+
+//mxGeometryを求める
+	$CellText_start = strpos($xml_file_string," id=\"".$UserObject['id']."\"");
+	$CellText_temp1 = substr($xml_file_string,$CellText_start);
+	$CellText_end = strpos($CellText_temp1,"</mxCell>");
+   $CellText_temp2 = substr($CellText_temp1,0,$CellText_end);
+
+   if(substr_count($CellText_temp2,"Cell") > 1){
+   		$CellText_end1 = strpos($CellText_temp2,"/>");
+   		$CellText_temp2 = substr($CellText_temp2,0,$CellText_end1);
+   }//mxCellが/>で終わる場合のチェック
+ $mxGeometryText_start = strpos($CellText_temp2,"<mxGeometry");
+ if($mxGeometryText_start !== false){
+ 	$mxGeometry= bin2hex(substr($CellText_temp2,$mxGeometryText_start));
+ }else{$mxGeometry="";}
+
 		
-				if($action_type == 'define problem'){
-					$style_text="rounded=0;whiteSpace=wrap;html=1;fontSize=14;pd3layer=".$action_layer .";pd3type=action;pd3action=ECDP;strokeColor=".$strokeColor.";fontColor=#ffffff;fillColor=#D1BC35;";
-				}elseif($action_type == 'collect/analyze information'){
-					$style_text="rounded=0;whiteSpace=wrap;html=1;fontSize=14;pd3layer=".$action_layer .";pd3type=action;pd3action=ECCAI;strokeColor=".$strokeColor.";fontColor=#ffffff;fillColor=#3E54E6;";
-				}elseif($action_type == 'generate hypothesis'){
-					$style_text="rounded=0;whiteSpace=wrap;html=1;fontSize=14;pd3layer=".$action_layer .";pd3type=action;pd3action=ECGH;strokeColor=".$strokeColor.";fontColor=#ffffff;fillColor=#C93AC9;";
-				}elseif($action_type == 'evaluate/select information'){
-					$style_text="rounded=0;whiteSpace=wrap;html=1;fontSize=14;pd3layer=".$action_layer .";pd3type=action;pd3action=ECESI;strokeColor=".$strokeColor.";fontColor=#ffffff;fillColor=#8F4132;";
-				}elseif($action_type == 'execute'){
-					$style_text="rounded=0;whiteSpace=wrap;html=1;fontSize=14;pd3layer=".$action_layer .";pd3type=action;pd3action=ECEX;strokeColor=".$strokeColor.";fontColor=#ffffff;fillColor=#2EBAC9;";
-				}else{
-					$style_text="rounded=0;whiteSpace=wrap;html=1;pd3layer=".$action_layer .";pd3type=action;fillColor=".$fillColor.";strokeColor=".$strokeColor.";".$dashed;
-				}					
-								
-				$putXML_middle .= "<object id=\"".$action_id."\"";
-				if($action_value != ''){$putXML_middle .= " label=\"".$action_value."\"";}
-				if($action_tooltip != ''){$putXML_middle .= " tooltip=\"".$action_tooltip."\"";}
-				$putXML_middle .= ">\n<mxCell style=\"".$style_text."\" vertex=\"1\"";
-				if($action_parent != ''){$putXML_middle .= " parent=\"".$action_parent."\"";}
-				$putXML_middle .= " >";
-				if($action_geometry){$putXML_middle .= hex2bin($action_geometry);}
-				$putXML_middle .=  "</mxCell>\n</object>\n";
-	//Actionの場合
-	}elseif(preg_match("/a pd3:Container;/", $ttl_array[$i])){
-		$container_array = array();
-		$container_array=explode(";\n",trim($ttl_array[$i]));
-		for($k=1;$k<count($container_array);$k++){	
-		
-			if(preg_match("/pd3:id/", $container_array[$k])){	
-							$container_id = trim(str_replace("pd3:id \"","",$container_array[$k]));
-							$container_id = trim(str_replace("\"","",$container_id));
-				}elseif(preg_match("/pd3:layer/", $container_array[$k])){	
-							$container_layer = trim(str_replace("pd3:layer \"","",$container_array[$k]));
-							$container_layer = trim(str_replace("\"","",$container_layer));
-				}elseif(preg_match("/pd3:value/", $container_array[$k])){	
-							$container_value = trim(str_replace("pd3:value \"","",$container_array[$k]));
-							$container_value = trim(str_replace("\"","",$container_value));
-				}elseif(preg_match("/pd3:dparent/", $container_array[$k])){	
-							$container_parent = trim(str_replace("pd3:dparent \"","",$container_array[$k]));
-							$container_parent = trim(preg_replace('/.*?:/s', '', str_replace("\"","",$container_parent)));
-				}elseif(preg_match("/pd3:geometry/", $container_array[$k])){	
-							$container_geometry = trim(str_replace("pd3:geometry \"","",$container_array[$k]));
-							$container_geometry = trim(str_replace("\"","",$container_geometry));
-				}
-		}
-				
-		if($container_layer == "topic"){$fillColor="#ffe6cc";
-											  $strokeColor="#d79b00";
-		}elseif($container_layer == "info"){$fillColor="#dae8fc";
-											  $strokeColor="#6c8ebf";
-		}elseif($container_layer == "phys"){$fillColor="#d5e8d4";
-											  $strokeColor="#82b366";
-		}
-		$style_text="swimlane;pd3layer=phys;pd3type=container;containertype=specialization;fillColor=".$fillColor.";strokeColor=".$strokeColor.";startSize=23;fontSize=14;";
+	$pd3type1="";
+	$pd3type2="";
 	
-		
-		$putXML_middle .= "<object id=\"".$container_id."\"";
-			if($container_value != ''){$putXML_middle .= " label=\"".$container_value."\"";}
-		$putXML_middle .= ">\n<mxCell style=\"".$style_text."\" vertex=\"1\"";
-			if($container_parent != ''){$putXML_middle .= " parent=\"".$container_parent."\"";}
-		$putXML_middle .= " >";
-			if($container_geometry){$putXML_middle .= hex2bin($container_geometry);}
-		$putXML_middle .=  "</mxCell>\n</object>\n";
-	
-		
-		
-		
+	//Actionの場合									
+	if($pd3type=='action'){											
+										if($pd3action_status){$pd3type2 = $pd3action_status;}
+										elseif($value_text == 'Start'){$pd3type2 = "start";}
+										elseif($value_text == 'End'){$pd3type2= "end";}
+										else{$pd3type2= "nil";} 
+										$pd3type1="pd3:Action";
+										$pd3type2= "pd3:actionType \"".$pd3type2."\"";
+										}	//Actionの場合_end
+										
 	//Containerの場合
-	}elseif(preg_match("/a pd3:Engineer;/", $ttl_array[$i])){
-		$putXML_middle .= makexml4object($ttl_array[$i],"engineer");
-	//Engineerの場合
-	}elseif(preg_match("/a pd3:Document;/", $ttl_array[$i])){
-		$putXML_middle .= makexml4object($ttl_array[$i],"document");
-	//Knowledgeの場合
-	}elseif(preg_match("/a pd3:Tool;/", $ttl_array[$i])){
-		$putXML_middle .= makexml4object($ttl_array[$i],"tool");
-	//Toolの場合
-	}elseif(preg_match("/a pd3:Flow/", $ttl_array[$i])){
-		$putXML_middle .= makexml4arc($ttl_array[$i],"information");
-		//Flowの場合
-	}elseif(preg_match("/a pd3:SubjectFlow;/", $ttl_array[$i])){
-		$putXML_middle .= makexml4arc($ttl_array[$i],"tool/knowledge");
-		//ToolFlowの場合
-	}elseif(preg_match("/a pd3:RationaleFlow;/", $ttl_array[$i])){
-		$putXML_middle .= makexml4arc($ttl_array[$i],"rationale");
-		//RationaleFlowの場合
-	}elseif(preg_match("/a pd3:AnnotationFlow;/", $ttl_array[$i])){
-		$putXML_middle .= makexml4arc($ttl_array[$i],"annotation");
-		//AnnotationFlowの場合
-	}elseif(preg_match("/a pd3:IntentionFlow;/", $ttl_array[$i])){
-		$putXML_middle .= makexml4arc($ttl_array[$i],"intention");
-		//IntentionFlowの場合
-	}elseif(preg_match("/a pd3:ContainerFlow;/", $ttl_array[$i])){
-		$putXML_middle .= makexml4arc($ttl_array[$i],"hierarchization");		
-		//ContainerFlowの場合
+	if($pd3type == 'container'){
+										$pd3type1="pd3:Container";
+										$pd3type2= "pd3:containerType \"".$containertype."\"";
+									}//Containerの場合_end
+	
+	//arcの場合
+
+	if($pd3type == 'arc'){
+					$pd3type1="arc";
+			}//arcの場合_end
+	
+	
+//annotationの場合
+	if($pd3type == 'annotation'){
+										$pd3type1="pd3:Annotation";
+										$pd3type2="pd3:nodeType \"annotation\"";
+									}//annotation場合_end	
+
+//rationaleの場合
+	if($pd3type == 'rationale'){
+										$pd3type1="pd3:Rationale";
+										$pd3type2="pd3:nodeType \"rationale\"";
+									}//rationale場合_end	
+
+//intentionの場合
+	if($pd3type == 'intention'){
+										$pd3type1="pd3:Intention";
+										$pd3type2="pd3:nodeType \"intention\"";
+									}//intention場合_end	
+						
+//documentの場合
+	if($pd3type == 'document'){
+										$pd3type1="pd3:Document";
+										$pd3type2="pd3:substanceType \"document\"";
+									}//documentの場合_end
+//engineerの場合
+	if($pd3type == 'engineer'){
+										$pd3type1="pd3:Engineer";
+										$pd3type2="pd3:substanceType \"engineer\"";
+									}//engineerの場合_end
+									
+//knowledgeの場合
+	if($pd3type == 'knowledge'){
+										$pd3type1="pd3:Knowledge";
+										$pd3type2="pd3:substanceType \"knowledge\"";
+									}//knowledge場合_end
+									
+//Toolの場合
+	if($pd3type == 'tool'){
+										$pd3type1="pd3:Tool";
+										$pd3type2="pd3:substanceType \"tool\"";
+									}//tool場合_end
+
+
+//Substanceの場合
+	if($pd3type == 'substance'){
+										$pd3type1="pd3:Substance";
+									}//substance場合_end
+									
+												
+	//pd3type1の情報がない場合
+	if(!$pd3type1 && !$pd3type2 && $endArrow){
+		
+		if($endArrow == 'block'){
+					$pd3type1="pd3:Flow";
+					$pd3type2= "pd3:arcType \"information\"";		//矢印の場合はFlow
+		}else{
+					$pd3type1="pd3:Entity";		
+		}
+		
+		$errorcheck=1;
 	}
+	
+       
+}
+//UserObjectタグのデータをarrayに
+ 	$pd3xmlData[] = ['pd3id' => (string)$pd3id,'pd3type1' => (string)$pd3type1,'pd3type2' =>(string)$pd3type2 ,'pd3layer' => (string)$pd3layer,'pd3parent' => (string)$pd3parent,'pd3source' => (string)$pd3source,'pd3target' => (string)$pd3target,'pd3value' =>(string)$pd3value,'pd3tooltip' =>(string)$pd3tooltip,'mxGeometry' => $mxGeometry,'entryX'=>(string)$entryX,'entryY'=>(string)$entryY,'entryDx'=>(string)$entryDx,'entryDy'=>(string)$entryDy,'exitX'=>(string)$exitX,'exitY'=>(string)$exitY,'exitDx'=>(string)$exitDx,'exitDy'=>(string)$exitDy,'errorcheck'=>(string)$errorcheck];		
+endforeach;
 
-}//for_ttl_array
+//objectタグの場合
+foreach($PD3xml->diagram->mxGraphModel->root->object as $object):
+
+ 		$pd3layer="";
+ 		$pd3type="";
+ 		$pd3action ="";
+ 		$pd3action_status ="";
+ 		$arctype="";
+ 		$endArrow="";
+ 		$containertype="";
+ 		$pd3parent ="";
+	    $pd3value = $object['label'];
+ 		$pd3target="";
+ 		$pd3source="";
+		$pd3id = $object['id'];
+		$entryX = "";
+		$entryY="";
+		$entryDx = "";
+		$entryDy="";
+		$exitX = "";
+		$exitY="";
+		$exitDx = "";
+		$exitDy="";
+		$errorcheck=0;
+		$pd3tooltip=str_replace(array("\r\n", "\r", "\n"),"\\n",$object['tooltip']);
+
+				
+		//ここからobject/mxCellを処理する
+    foreach ($object as $key => $mxCell) {
+
+	if($mxCell['style']){
+										$styleArray = array();			
+										$styleArray = explode(";",$mxCell['style']);
+										for($i = 0; $i < count($styleArray);$i++){
+											if($styleArray[$i]){
+												
+											$stylePropertyArray = array();
+											$stylePropertyArray = explode("=",$styleArray[$i]);
+												$stylePeoperty[]=$stylePropertyArray[0];		
+											if (preg_match("/URI/", $stylePropertyArray[0])){
+																$mURI = str_replace("URI=","",$styleArray[$i]);
+											}
+											if (preg_match("/prefix/", $stylePropertyArray[0])){
+																$mprefix = str_replace("prefix=","",$styleArray[$i]);
+											}
+											if (preg_match("/title/", $stylePropertyArray[0])){
+																$mtitle = str_replace("title=","",$styleArray[$i]);
+											}
+											if (preg_match("/creator/", $stylePropertyArray[0])){
+																$mcreator = str_replace("creator=","",$styleArray[$i]);
+											}
+											if (preg_match("/eptype/", $stylePropertyArray[0])){
+																$eptype = str_replace("eptype=","",$styleArray[$i]);
+											}
+											if (preg_match("/description/", $stylePropertyArray[0])){
+																$mdescription = str_replace("description=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3layer/", $stylePropertyArray[0])){
+																$pd3layer = str_replace("pd3layer=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3type/", $stylePropertyArray[0])){
+																$pd3type = str_replace("pd3type=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3action/", $stylePropertyArray[0])) {
+																$pd3action = str_replace("pd3action=","",$styleArray[$i]);
+
+																switch ($pd3action){
+																			case 'ECDP':
+																			    $pd3action_status = 'define problem';
+  																				break;
+																			case 'ECCAI':
+																			    $pd3action_status = 'collect/analyze information';
+  																				break;
+																			case 'ECGH':
+																			    $pd3action_status = 'generate hypothesis';
+  																				break;
+																			case 'ECESI':
+																			    $pd3action_status = 'evaluate/select information';
+  																				break;
+																			case 'ECEX':
+																			    $pd3action_status = 'execute';
+  																				break;
+  																}
+
+											}
+											if (preg_match("/arctype/", $stylePropertyArray[0])) {
+																$arctype = str_replace("arctype=","",$styleArray[$i]);
+											}		
+											if (preg_match("/endArrow/", $stylePropertyArray[0])) {
+																$endArrow = str_replace("endArrow=","",$styleArray[$i]);
+											}											
+											if (preg_match("/containertype/", $stylePropertyArray[0])) {
+																$containertype = str_replace("containertype=","",$styleArray[$i]);
+											}		
+																						
+											if (preg_match("/entryX/", $stylePropertyArray[0])) {
+																$entryX = str_replace("entryX=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/entryY/", $stylePropertyArray[0])) {
+																$entryY = str_replace("entryY=","",$styleArray[$i]);
+											}
+											
+											if (preg_match("/entryDx/", $stylePropertyArray[0])) {
+																$entryDx = str_replace("entryDx=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/entryDy/", $stylePropertyArray[0])) {
+																$entryDy = str_replace("entryDy=","",$styleArray[$i]);
+											}	
+												
+											if (preg_match("/exitX/", $stylePropertyArray[0])) {
+																$exitX = str_replace("exitX=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/exitY/", $stylePropertyArray[0])) {
+																$exitY = str_replace("exitY=","",$styleArray[$i]);
+											}
+											if (preg_match("/exitDx/", $stylePropertyArray[0])) {
+																$exitDx = str_replace("exitDx=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/exitDy/", $stylePropertyArray[0])) {
+																$exitDy = str_replace("exitDy=","",$styleArray[$i]);
+											}	
+											
+											 }//if()
+											} //for
+																				
+} //if_mxCell
+
+	if($mxCell['parent']){$pd3parent = $mxCell['parent'];}																
+	if($mxCell['source']){$pd3source = $mxCell['source'];	}																	
+	if($mxCell['target']){$pd3target = $mxCell['target'];}
 
 
-//prefixのuri探し
-$prefix_search_array = array_column($prefix_data,'prefix_name');
-$prefix_search_array_result = array_keys($prefix_search_array,$prefix);
-$prefix_uri=$prefix_data[$prefix_search_array_result[0]]['prefix_uri'];
-//var_dump($prefix_search_array_result);
-//$formerActionResult = array_keys($formerActionArray,$pd3xmlData[$inputResult[$i]]['pd3source']);
+//mxGeometryを求める
+	$CellText_start = strpos($xml_file_string," id=\"".$object['id']."\"");
+	$CellText_temp1 = substr($xml_file_string,$CellText_start);
+	$CellText_end = strpos($CellText_temp1,"</mxCell>");
+   $CellText_temp2 = substr($CellText_temp1,0,$CellText_end);
 
-$putXML_top="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-$putXML_top .= "<mxfile host=\"".$host."\" modified=\"".$Modified."\" >\n";
-$putXML_top .= "<diagram id=\"".$DiagramId."\" name=\"".$DiagramName."\">\n";
-$putXML_top .= " <mxGraphModel>\n";
-$putXML_top .= "<root>\n";
-$putXML_top .= "<mxCell id=\"".$ep_id."\" style=\"URI=".$prefix_uri.";prefix=".$prefix.";title=".$Title.";creator=".$Creator.";description=".$Description.";eptype=".$Eptype.";\" />\n";
-$putXML_bottom = "</root>\n</mxGraphModel>\n</diagram>\n</mxfile>";
-$putXML = $putXML_top.$putXML_middle.$putXML_bottom;
+   if(substr_count($CellText_temp2,"Cell") > 1){
+   		$CellText_end1 = strpos($CellText_temp2,"/>");
+   		$CellText_temp2 = substr($CellText_temp2,0,$CellText_end1);
+   }//mxCellが/>で終わる場合のチェック
+ $mxGeometryText_start = strpos($CellText_temp2,"<mxGeometry");
+ if($mxGeometryText_start !== false){
+ 	$mxGeometry= bin2hex(substr($CellText_temp2,$mxGeometryText_start));
+ }else{$mxGeometry="";}
+
+		
+	$pd3type1="";
+	$pd3type2="";
+	
+	//Actionの場合									
+	if($pd3type=='action'){											
+										if($pd3action_status){$pd3type2 = $pd3action_status;}
+										elseif($value_text == 'Start'){$pd3type2 = "start";}
+										elseif($value_text == 'End'){$pd3type2= "end";}
+										else{$pd3type2= "nil";} 
+										$pd3type1="pd3:Action";
+										$pd3type2= "pd3:actionType \"".$pd3type2."\"";
+										}	//Actionの場合_end
+										
+	//Containerの場合
+	if($pd3type == 'container'){
+										$pd3type1="pd3:Container";
+										$pd3type2= "pd3:containerType \"".$containertype."\"";
+									}//Containerの場合_end
+	
+	//arcの場合
 
 
+	if($pd3type == 'arc'){
+					$pd3type1="arc";
+			}//arcの場合_end
+	
+	
+//annotationの場合
+	if($pd3type == 'annotation'){
+										$pd3type1="pd3:Annotation";
+										$pd3type2="pd3:nodeType \"annotation\"";
+									}//annotation場合_end	
+
+//rationaleの場合
+	if($pd3type == 'rationale'){
+										$pd3type1="pd3:Rationale";
+										$pd3type2="pd3:nodeType \"rationale\"";
+									}//rationale場合_end	
+
+//intentionの場合
+	if($pd3type == 'intention'){
+										$pd3type1="pd3:Intention";
+										$pd3type2="pd3:nodeType \"intention\"";
+									}//intention場合_end	
+						
+//documentの場合
+	if($pd3type == 'document'){
+										$pd3type1="pd3:Document";
+										$pd3type2="pd3:substanceType \"document\"";
+									}//documentの場合_end
+//engineerの場合
+	if($pd3type == 'engineer'){
+										$pd3type1="pd3:Engineer";
+										$pd3type2="pd3:substanceType \"engineer\"";
+									}//engineerの場合_end
+									
+//knowledgeの場合
+	if($pd3type == 'knowledge'){
+										$pd3type1="pd3:Knowledge";
+										$pd3type2="pd3:substanceType \"knowledge\"";
+									}//knowledge場合_end
+									
+//Toolの場合
+	if($pd3type == 'tool'){
+										$pd3type1="pd3:Tool";
+										$pd3type2="pd3:substanceType \"tool\"";
+									}//tool場合_end
+
+
+//Substanceの場合
+	if($pd3type == 'substance'){
+										$pd3type1="pd3:Substance";
+									}//substance場合_end
+									
+									
+												
+	//pd3type1の情報がない場合
+	if(!$pd3type1 && !$pd3type2 && $endArrow){
+		
+		if($endArrow == 'block'){
+					$pd3type1="pd3:Flow";
+					$pd3type2= "pd3:arcType \"information\"";		//矢印の場合はFlow
+		}else{
+					$pd3type1="pd3:Entity";		
+		}
+		
+		$errorcheck=1;
+	}
+	
+       
+}
+//objectタグのデータをarrayに
+ 	$pd3xmlData[] = ['pd3id' => (string)$pd3id,'pd3type1' => (string)$pd3type1,'pd3type2' =>(string)$pd3type2 ,'pd3layer' => (string)$pd3layer,'pd3parent' => (string)$pd3parent,'pd3source' => (string)$pd3source,'pd3target' => (string)$pd3target,'pd3value' =>(string)$pd3value,'pd3tooltip' =>(string)$pd3tooltip,'mxGeometry' => $mxGeometry,'entryX'=>(string)$entryX,'entryY'=>(string)$entryY,'entryDx'=>(string)$entryDx,'entryDy'=>(string)$entryDy,'exitX'=>(string)$exitX,'exitY'=>(string)$exitY,'exitDx'=>(string)$exitDx,'exitDy'=>(string)$exitDy,'errorcheck'=>(string)$errorcheck];		
+endforeach;
+
+
+
+ //mxCellタグの場合
+ foreach($PD3xml->diagram->mxGraphModel->root->mxCell as $mxCell):
+ 		
+ 		$pd3layer="";
+ 		$pd3type="";
+ 		$pd3action ="";
+ 		$pd3action_status ="";
+ 		$arctype="";
+ 		$endArrow="";
+ 		$containertype="";
+ 		$pd3parent ="";
+	    $pd3value ="";
+ 		$pd3target="";
+ 		$pd3source="";
+		$pd3id = $mxCell['id'];
+		$entryX = "";
+		$entryY="";
+		$entryDx = "";
+		$entryDy="";
+		$exitX = "";
+		$exitY="";
+		$exitDx = "";
+		$exitDy="";
+		$errorcheck=0;
+		$pd3tooltip="";
+
+	if($mxCell['value']){
+			$pd3value = mb_convert_kana($mxCell['value'],"a");
+					}
+			
+	if($mxCell['style']){
+										$styleArray = array();			
+										$styleArray = explode(";",$mxCell['style']);
+										for($i = 0; $i < count($styleArray);$i++){
+											if($styleArray[$i]){
+												
+											$stylePropertyArray = array();
+											$stylePropertyArray = explode("=",$styleArray[$i]);
+												$stylePeoperty[]=$stylePropertyArray[0];		
+											if (preg_match("/URI/", $stylePropertyArray[0])){
+																$mURI = str_replace("URI=","",$styleArray[$i]);
+											}
+											if (preg_match("/prefix/", $stylePropertyArray[0])){
+																$mprefix = str_replace("prefix=","",$styleArray[$i]);
+											}
+											if (preg_match("/title/", $stylePropertyArray[0])){
+																$mtitle = str_replace("title=","",$styleArray[$i]);
+											}
+											if (preg_match("/creator/", $stylePropertyArray[0])){
+																$mcreator = str_replace("creator=","",$styleArray[$i]);
+											}
+											if (preg_match("/eptype/", $stylePropertyArray[0])){
+																$eptype = str_replace("eptype=","",$styleArray[$i]);
+											}
+											if (preg_match("/description/", $stylePropertyArray[0])){
+																$mdescription = str_replace("description=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3layer/", $stylePropertyArray[0])){
+																$pd3layer = str_replace("pd3layer=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3type/", $stylePropertyArray[0])){
+																$pd3type = str_replace("pd3type=","",$styleArray[$i]);
+											}
+											if (preg_match("/pd3action/", $stylePropertyArray[0])) {
+																$pd3action = str_replace("pd3action=","",$styleArray[$i]);
+
+																switch ($pd3action){
+																			case 'ECDP':
+																			    $pd3action_status = 'define problem';
+  																				break;
+																			case 'ECCAI':
+																			    $pd3action_status = 'collect/analyze information';
+  																				break;
+																			case 'ECGH':
+																			    $pd3action_status = 'generate hypothesis';
+  																				break;
+																			case 'ECESI':
+																			    $pd3action_status = 'evaluate/select information';
+  																				break;
+																			case 'ECEX':
+																			    $pd3action_status = 'execute';
+  																				break;
+  																}
+
+											}
+											if (preg_match("/arctype/", $stylePropertyArray[0])) {
+																$arctype = str_replace("arctype=","",$styleArray[$i]);
+											}		
+											if (preg_match("/endArrow/", $stylePropertyArray[0])) {
+																$endArrow = str_replace("endArrow=","",$styleArray[$i]);
+											}											
+											if (preg_match("/containertype/", $stylePropertyArray[0])) {
+																$containertype = str_replace("containertype=","",$styleArray[$i]);
+											}		
+																						
+											if (preg_match("/entryX/", $stylePropertyArray[0])) {
+																$entryX = str_replace("entryX=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/entryY/", $stylePropertyArray[0])) {
+																$entryY = str_replace("entryY=","",$styleArray[$i]);
+											}
+											
+											if (preg_match("/entryDx/", $stylePropertyArray[0])) {
+																$entryDx = str_replace("entryDx=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/entryDy/", $stylePropertyArray[0])) {
+																$entryDy = str_replace("entryDy=","",$styleArray[$i]);
+											}	
+												
+											if (preg_match("/exitX/", $stylePropertyArray[0])) {
+																$exitX = str_replace("exitX=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/exitY/", $stylePropertyArray[0])) {
+																$exitY = str_replace("exitY=","",$styleArray[$i]);
+											}
+											if (preg_match("/exitDx/", $stylePropertyArray[0])) {
+																$exitDx = str_replace("exitDx=","",$styleArray[$i]);
+											}	
+											
+											if (preg_match("/exitDy/", $stylePropertyArray[0])) {
+																$exitDy = str_replace("exitDy=","",$styleArray[$i]);
+											}	
+											
+											 }//if()
+											} //for
+										
+										
+										
+										
+} //if_mxCell
+										
+	if($mxCell['parent']){$pd3parent = $mxCell['parent'];}																
+	if($mxCell['source']){$pd3source = $mxCell['source'];	}																	
+	if($mxCell['target']){$pd3target = $mxCell['target'];}
+
+
+//mxGeometryを求める
+	$CellText_start = strpos($xml_file_string,"<mxCell id=\"".$mxCell['id']."\"");
+	$CellText_temp1 = substr($xml_file_string,$CellText_start);
+	$CellText_end = strpos($CellText_temp1,"</mxCell>");
+   $CellText_temp2 = substr($CellText_temp1,0,$CellText_end);
+
+   if(substr_count($CellText_temp2,"Cell") > 1){
+   		$CellText_end1 = strpos($CellText_temp2,"/>");
+   		$CellText_temp2 = substr($CellText_temp2,0,$CellText_end1);
+   }//mxCellが/>で終わる場合のチェック
+ $mxGeometryText_start = strpos($CellText_temp2,"<mxGeometry");
+ if($mxGeometryText_start !== false){
+ 	$mxGeometry= bin2hex(substr($CellText_temp2,$mxGeometryText_start));
+ }else{$mxGeometry="";}
+
+		
+	$pd3type1="";
+	$pd3type2="";
+	
+	//Actionの場合									
+	if($pd3type=='action'){											
+										if($pd3action_status){$pd3type2 = $pd3action_status;}
+										elseif($value_text == 'Start'){$pd3type2 = "start";}
+										elseif($value_text == 'End'){$pd3type2= "end";}
+										else{$pd3type2= "nil";} 
+										$pd3type1="pd3:Action";
+										$pd3type2= "pd3:actionType \"".$pd3type2."\"";
+										}	//Actionの場合_end
+										
+	//Containerの場合
+	if($pd3type == 'container'){
+										$pd3type1="pd3:Container";
+										$pd3type2= "pd3:containerType \"".$containertype."\"";
+									}//Containerの場合_end
+	
+	//arcの場合
+	if($pd3type == 'arc'){
+					$pd3type1="arc";
+			}//arcの場合_end
+	
+	
+//annotationの場合
+	if($pd3type == 'annotation'){
+										$pd3type1="pd3:Annotation";
+										$pd3type2="pd3:nodeType \"annotation\"";
+									}//annotation場合_end	
+
+//rationaleの場合
+	if($pd3type == 'rationale'){
+										$pd3type1="pd3:Rationale";
+										$pd3type2="pd3:nodeType \"rationale\"";
+									}//rationale場合_end	
+
+//intentionの場合
+	if($pd3type == 'intention'){
+										$pd3type1="pd3:Intention";
+										$pd3type2="pd3:nodeType \"intention\"";
+									}//intention場合_end	
+						
+//documentの場合
+	if($pd3type == 'document'){
+										$pd3type1="pd3:Document";
+										$pd3type2="pd3:substanceType \"document\"";
+									}//documentの場合_end
+//engineerの場合
+	if($pd3type == 'engineer'){
+										$pd3type1="pd3:Engineer";
+										$pd3type2="pd3:substanceType \"engineer\"";
+									}//engineerの場合_end
+									
+//knowledgeの場合
+	if($pd3type == 'knowledge'){
+										$pd3type1="pd3:Knowledge";
+										$pd3type2="pd3:substanceType \"knowledge\"";
+									}//knowledge場合_end
+									
+//Toolの場合
+	if($pd3type == 'tool'){
+										$pd3type1="pd3:Tool";
+										$pd3type2="pd3:substanceType \"tool\"";
+									}//tool場合_end
+
+
+//Substanceの場合
+	if($pd3type == 'substance'){
+										$pd3type1="pd3:Substance";
+									}//substance場合_end
+									
+												
+	//pd3type1の情報がない場合
+	if(!$pd3type1 && !$pd3type2 && $endArrow){
+		
+		if($endArrow == 'block'){
+					$pd3type1="pd3:Flow";
+					$pd3type2= "pd3:arcType \"information\"";		//矢印の場合はFlow
+		}else{
+					$pd3type1="pd3:Entity";		
+		}
+		
+		$errorcheck=1;
+	}
+	
+//mxCellタグのデータをarrayに
+ 	$pd3xmlData[] = ['pd3id' => (string)$pd3id,'pd3type1' => (string)$pd3type1,'pd3type2' =>(string)$pd3type2 ,'pd3layer' => (string)$pd3layer,'pd3parent' => (string)$pd3parent,'pd3source' => (string)$pd3source,'pd3target' => (string)$pd3target,'pd3value' =>(string)$pd3value,'pd3tooltip' =>(string)$pd3tooltip,'mxGeometry' => $mxGeometry,'entryX'=>(string)$entryX,'entryY'=>(string)$entryY,'entryDx'=>(string)$entryDx,'entryDy'=>(string)$entryDy,'exitX'=>(string)$exitX,'exitY'=>(string)$exitY,'exitDx'=>(string)$exitDx,'exitDy'=>(string)$exitDy,'errorcheck'=>(string)$errorcheck];
+ endforeach;
+ 
+ /*
+ echo('<pre>');
+var_dump($pd3xmlData);
+echo('</pre>');
+ */
+ //id順でソート
+ //$ids = array_column($pd3xmlData, 'pd3id');
+//array_multisort($ids, SORT_ASC, $pd3xmlData);
+ 
+ //prefixなどの出力
+ if(!$mURI){$mURI="http://digital-triplet.org/DT/".$mDiagramID;}
+if(!$mprefix){$mprefix=$mDiagramID;}
+$putTurtle = "@prefix ".$mprefix.": <".$mURI."> .\n";
+$putTurtle .= "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n";
+$putTurtle .= "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n";
+$putTurtle .= "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n";
+$putTurtle .= "@prefix dcterms: <http://purl.org/dc/terms/> .\n";
+$putTurtle .= "@prefix pd3: <http://DigitalTriplet.net/2021/08/ontology#> .\n\n";
+
+ //EngineeringProcessの出力
+$putTurtle .= $mprefix.":0 a pd3:EngineeringProcess;\n";
+if($mDiagramName){$putTurtle .= "  pd3:diagramName \"".$mDiagramName."\";\n";}
+if($mDiagramID){$putTurtle .= "  pd3:diagramId \"".$mDiagramID."\";\n";}
+if($mtitle){$putTurtle .= "  dcterms:title \"".$mtitle."\";\n";}
+if($mcreator){$putTurtle .= "  dcterms:creator \"".$mcreator."\";\n";}
+if($mdescription){$putTurtle .= "  dcterms:description \"".$mdescription."\";\n";}
+if($eptype){$putTurtle .= "  pd3:epType \"".$eptype."\";\n";}
+$putTurtle .= "  dcterms:modified \"".$mModified."\";\n";
+$putTurtle .= "  pd3:id \"0\".\n\n";
+
+
+//以下arrayの内容を出力
+foreach($pd3xmlData as $dunit){
+
+$nosource=0; //errorcheck for source
+$notarget=0; //errorcheck for target
+$nolayer=0; //errorcheck for layer
+				
+if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == '' && $dunit['mxGeometry'] == '' && $dunit['pd3parent'] != ''){
+
+
+				$putTurtle .= $mprefix.":1 a pd3:Entity;\n";				
+				$putTurtle .= "  pd3:isIncludedIn ".$mprefix.":0;\n";
+				$putTurtle .= "  pd3:dparent ".$mprefix.":0;\n";
+				$putTurtle .= "  pd3:id \"1\".\n\n";
+}elseif($dunit['pd3type1'] != ''){
+	
+	if($dunit['pd3type1'] || $dunit['pd3value']){
+		
+		#sourceがcontainerなのか
+		if($dunit['pd3source']){
+		$sourceArray = array();
+		$sourceArray =  array_column($pd3xmlData,'pd3id');
+		$sourceResult = array_keys($sourceArray,$dunit['pd3source']);
+		if($pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Container'){
+					$dunit['pd3type1'] = 'pd3:ContainerFlow';
+					}
+		}		
+		
+		if($dunit['pd3type1'] == 'arc'){
+			//sourceのpd3typeは？
+		    $sourceArray = array();
+			$sourceArray = array_column($pd3xmlData,'pd3id');
+			$sourceResult = array_keys($sourceArray,$dunit['pd3source']);
+            $pd3arctype =  $pd3xmlData[$sourceResult[0]]['pd3type1'];
+     
+            switch ($pd3arctype) {
+    				case 'pd3:Intention':
+        				$dunit['pd3type1'] = "pd3:IntentionFlow";
+        				$dunit['pd3type2'] = "pd3:arcType \"intention\"";
+        				break;
+    				case 'pd3:Rationale':
+        				$dunit['pd3type1'] = "pd3:RationaleFlow";
+        				$dunit['pd3type2'] = "pd3:arcType \"rationale\"";
+        				break;
+    				case 'pd3:Annotation':
+        				$dunit['pd3type1'] = "pd3:AnnotationFlow";
+        				$dunit['pd3type2'] = "pd3:arcType \"annotation\"";
+        				break;
+    				case 'pd3:Knowledge':
+        				$dunit['pd3type1'] = "pd3:SubstanceFlow";
+        				$dunit['pd3type2'] = "pd3:arcType \"knowledge\"";
+        				break;
+    				case 'pd3:Engineer':
+        				$dunit['pd3type1'] = "pd3:SubstanceFlow";
+        				$dunit['pd3type2'] = "pd3:arcType \"engineer\"";
+        				break;
+    				case 'pd3:Tool':
+        				$dunit['pd3type1'] = "pd3:SubstanceFlow";
+        				$dunit['pd3type2'] = "pd3:arcType \"tool\"";
+        				break;
+    				case 'pd3:Document':
+        				$dunit['pd3type1'] = "pd3:SubstanceFlow";
+        				$dunit['pd3type2'] = "pd3:arcType \"document\"";
+        				break;
+        			default:
+        				$dunit['pd3type1'] = "pd3:Flow";
+        				$dunit['pd3type2'] = "pd3:arcType \"information\"";
+			}
+			
+		}//arc終わり
+		
+		
+		$putTurtle .= $mprefix.":".$dunit['pd3id']." a ".$dunit['pd3type1'].";\n";
+		if($dunit['pd3type2']){$putTurtle .= "  ".$dunit['pd3type2'].";\n";}
+
+		$putTurtle .= "  pd3:id \"".$dunit['pd3id']."\";\n";
+		if($dunit['pd3layer']=='topic' || $dunit['pd3layer']=='phys' || $dunit['pd3layer']=='info'){$putTurtle .= "  pd3:layer \"".$dunit['pd3layer']."\";\n";}else{
+				$nolayer = 1;
+		}
+
+
+		#containerの場合(member,contraction追加)
+		if($dunit['pd3type1'] == 'pd3:Container'){
+			
+			$container_member_list="";
+			$container_member_array = array();
+			$container_member_array = array_column($pd3xmlData,'pd3parent');
+			$container_member_result = array_keys($container_member_array,$dunit['pd3id']);
+		
+			if(count($container_member_result) > 0){
+				$container_member_list .= "  pd3:member ";
+				for($i=0;$i<count($container_member_result);$i++){
+					$container_member_list .= $mprefix.":".$pd3xmlData[$container_member_result[$i]]['pd3id'];
+					if($i<count($container_member_result)-1){$container_member_list .= ",";}
+				}				
+				$container_member_list .= ";\n";
+				}		
+		$putTurtle .= $container_member_list;			
+		
+		#altoutput,contraction追加	
+		$altOutput_array = array();
+		$altOutput_array = array_column($pd3xmlData,'pd3source');
+		$altOutput_result = array_keys($altOutput_array,$dunit['pd3id']);
+		//$putTurtle .= "  pd3:containerOutput \"".$mprefix.":".$pd3xmlData[$altOutput_result[0]]['pd3id']."\";\n";
+		$putTurtle .= "  pd3:contraction ".$mprefix.":".$pd3xmlData[$altOutput_result[0]]['pd3target'].";\n";
+	
+		}
+	
+	
+		#parentがContainertypeの場合attribution追加
+		if($dunit['pd3parent']){
+		$attributionArray = array();
+		$attributionArray =  array_column($pd3xmlData,'pd3id');
+		$attributionResult = array_keys($attributionArray,$dunit['pd3parent']);
+		if($pd3xmlData[$attributionResult[0]]['pd3type1'] == 'pd3:Container'){
+			$putTurtle .= "  pd3:attribution ".$mprefix.":".$dunit['pd3parent'].";\n";
+		}
+		 		}
+		
+		
+		#value、Flowがparentのvalue探し
+		if($dunit['pd3value'] != ""){$putTurtle .= "  pd3:value \"\"\"".htmlspecialchars($dunit['pd3value'])."\"\"\";\n";}
+		elseif(!$dunit['pd3value']  && ($dunit['pd3type1']=="pd3:Flow" ||  $dunit['pd3type1']=="pd3:ContainerFlow" || $dunit['pd3type1']=="pd3:SupFlow" || $dunit['pd3type1']=="pd3:AnnotationFlow" || $dunit['pd3type1']=="pd3:IntentionFlow" || $dunit['pd3type1']=="pd3:RationaleFlow"|| $dunit['pd3type1']=="pd3:SubjectFlow")){
+		$valueArray = array();
+		$valuetext="";
+		$valueArray =  array_column($pd3xmlData,'pd3parent');
+		$valueResult = array_keys($valueArray,$dunit['pd3id']);
+		$putTurtle .= "  pd3:value \"\"\"".htmlspecialchars(mb_convert_kana($pd3xmlData[$valueResult[0]]['pd3value'],"a"))."\"\"\";\n";
+		}
+		
+		#parent追加
+		if($dunit['pd3parent'] != ''){
+					$putTurtle .= "  pd3:isIncludedIn ".$mprefix.":0;\n";
+					$putTurtle .= "  pd3:dparent ".$mprefix.":".$dunit['pd3parent'].";\n";
+
+		}
+			
+		#actionの場合
+		if($dunit['pd3type1'] == 'pd3:Action'){
+			#input探し
+			$input_string="";
+			$inputArray = array();
+			$inputArray = array_column($pd3xmlData,'pd3target');
+			$inputResult = array_keys($inputArray,$dunit['pd3id']);
+			if(count($inputResult) > 0){
+				$input_string .= "  pd3:input ";
+				for($i=0;$i<count($inputResult);$i++){
+					$formerActionid = $pd3xmlData[$inputResult[$i]]['pd3source']; 
+					//ContainerInput追加
+					$formerActionArray = array_column($pd3xmlData,'pd3id');
+					$formerActionResult = array_keys($formerActionArray,$pd3xmlData[$inputResult[$i]]['pd3source']);
+					if($pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Container'){
+					$putTurtle .= "  pd3:expansion ".$mprefix.":".$pd3xmlData[$formerActionResult[0]]['pd3id'].";\n";
+					//$putTurtle .= "  pd3:containerInput ".$mprefix.":".$pd3xmlData[$inputResult[$i]]['pd3id'].";\n";
+
+					}
+			
+					$input_string .= $mprefix.":".$pd3xmlData[$inputResult[$i]]['pd3id'];
+					if($i<count($inputResult)-1){$input_string .= ",";}
+				}				
+				$input_string=$input_string.";\n";
+				}				
+		$putTurtle .= $input_string;
+		
+		#output探し
+			$output_string="";
+			$outputArray = array();
+			$outputArray = array_column($pd3xmlData,'pd3source');
+			$outputResult = array_keys($outputArray,$dunit['pd3id']);
+			if(count($outputResult) > 0){
+				$output_string .= "  pd3:output ";
+				for($i=0;$i<count($outputResult);$i++){
+						$output_string .= $mprefix.":".$pd3xmlData[$outputResult[$i]]['pd3id'];
+					if($i<count($outputResult)-1){$output_string .= ",";}
+				}				
+				$output_string=$output_string.";\n";
+				}					
+		$putTurtle .= $output_string;	
+		
+		
+		
+		#altInput,
+		}//actionのend
+		
+		#annotation ~ documentの場合
+		if($dunit['pd3type1'] == 'pd3:Annotation' || $dunit['pd3type1'] == 'pd3:Rationale' || $dunit['pd3type1'] == 'pd3:Intention' || $dunit['pd3type1'] == 'pd3:Engineer' || $dunit['pd3type1'] == 'pd3:Knowledge' || $dunit['pd3type1'] == 'pd3:Tool' || $dunit['pd3type1'] == 'pd3:Document' || $dunit['pd3type1'] == 'pd3:Substance'){
+		
+		#output探し
+			$output_string="";
+			$outputArray = array();
+			$outputArray = array_column($pd3xmlData,'pd3source');
+			$outputResult = array_keys($outputArray,$dunit['pd3id']);
+			if(count($outputResult) > 0){
+				$output_string .= "  pd3:output ";
+				for($i=0;$i<count($outputResult);$i++){
+						$output_string .= $mprefix.":".$pd3xmlData[$outputResult[$i]]['pd3id'];
+					if($i<count($outputResult)-1){$output_string .= ",";}
+				}				
+				$output_string=$output_string.";\n";
+				}					
+		$putTurtle .= $output_string;	
+		
+		
+		
+		#altInput,
+		}//etcのend
+
+		if($dunit['pd3type1']== 'pd3:Flow' || $dunit['pd3type1']== 'pd3:ContainerFlow' || $dunit['pd3type1']== 'pd3:SubjectFlow'){
+			if($dunit['pd3source']==''){$nosource=1;} //nosource?
+			if($dunit['pd3target']==''){$notarget=1;} //notarget?
+		}
+
+		if($dunit['pd3type1']=="pd3:AnnotationFlow" || $dunit['pd3type1']=="pd3:IntentionFlow" || $dunit['pd3type1']=="pd3:RationaleFlow"){
+					if($dunit['pd3target']==''){$notarget=1;} //notarget?
+		}
+
+		if($dunit['pd3source']){$putTurtle .= "  pd3:source ".$mprefix.":".trim($dunit['pd3source']).";\n";}
+		if($dunit['pd3target']){$putTurtle .= "  pd3:target ".$mprefix.":".trim($dunit['pd3target']).";\n";}
+
+		if($dunit['pd3tooltip']!=''){$putTurtle .= "  pd3:content \"".$dunit['pd3tooltip']."\";\n";}		
+		if($dunit['entryX']!=''){$putTurtle .= "  pd3:entryX \"".$dunit['entryX']."\";\n";}
+		if($dunit['entryY']!=''){$putTurtle .= "  pd3:entryY \"".$dunit['entryY']."\";\n";}
+		if($dunit['entryDx']!=''){$putTurtle .= "  pd3:entryDx \"".$dunit['entryDx']."\";\n";}
+		if($dunit['entryDy']!=''){$putTurtle .= "  pd3:entryDy \"".$dunit['entryDy']."\";\n";}
+		if($dunit['exitX']!=''){$putTurtle .= "  pd3:exitX \"".$dunit['exitX']."\";\n";}
+		if($dunit['exitY']!=''){$putTurtle .= "  pd3:exitY \"".$dunit['exitY']."\";\n";}
+		if($dunit['exitDx']!=''){$putTurtle .= "  pd3:exitDx \"".$dunit['exitDx']."\";\n";}
+		if($dunit['exitDy']!=''){$putTurtle .= "  pd3:exitDy \"".$dunit['exitDy']."\";\n";}
+		if($dunit['mxGeometry']){$putTurtle .= "  pd3:geometry \"".$dunit['mxGeometry']."\".\n";}else{
+			$putTurtle .= "  pd3:geometry \"\".\n";			
+		}
+
+
+	}
+//if$dunit['pd3type1']のend
+
+
+//errorの場合	
+if($dunit['errorcheck']== '1'){
+//$putTurtle .= "  # Error : Irregular XML syntax (no arctype, ".$dunit['pd3id'].") \n";
+//$putTurtle .= "  # Warning : System​ inferred entity  value as ".$dunit['pd3type1'].". \n";
+}	
+if($nolayer== '1'){
+$putTurtle .= "  # Error : Irregular XML syntax (no pd3layer, ".$dunit['pd3id'].") \n";
+//$putTurtle .= "  # Warning : System​ inferred entity  value as ".$dunit['pd3type1'].". \n";
+}	
+if($notarget== '1'){
+$putTurtle .= "  # Warning : no target in (".$dunit['pd3id'].") Flow \n"; 
+}	
+
+if($nosource== '1'){
+$putTurtle .= "  # Warning : no source in  (".$dunit['pd3id'].") Flow\n"; 
+}	
+
+
+			$putTurtle .= "\n\n";
+}
+
+if(count($pd3xmlData)==0){
+$putTurtle .= "  # Error : Irregular XML syntax \n";
+}
+
+
+	}//foreach end
 
 $stdout= fopen( 'php://stdout', 'w' );
-fwrite( $stdout, $putXML );
+fwrite( $stdout, $putTurtle );
+array_map('unlink', glob('ttl/*.*')); 
+unlink($xmlfilename);
+
 ?>
