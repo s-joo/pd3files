@@ -1051,7 +1051,7 @@ $putTurtle .= "  # Error : Irregular XML syntax \n";
 
 $stdout= fopen( 'php://stdout', 'w' );
 fwrite( $stdout, $putTurtle );
-array_map('unlink', glob('ttl/*.*')); 
+array_map('unlink', glob('./'.$xmlfilename)); 
 unlink($xmlfilename);
 
 ?>
