@@ -707,6 +707,8 @@ array_multisort($ids, SORT_ASC, $pd3xmlData);
  //prefixなどの出力
  if(!$mURI){$mURI="http://digital-triplet.org/DT/".$mDiagramID;}
 if(!$mprefix){$mprefix=$mDiagramID;}
+$mprefix = "pd3".$mprefix;
+
 $putTurtle = "@prefix ".$mprefix.": <".$mURI."> .\n";
 $putTurtle .= "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n";
 $putTurtle .= "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n";
@@ -754,6 +756,17 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 					}
 			}		
 		
+		#sourceがtool/engineer/knowledge/documentなのか
+		if($dunit['pd3source']){
+		$sourceArray = array();
+		$sourceArray =  array_column($pd3xmlData,'pd3id');
+		$sourceResult = array_keys($sourceArray,$dunit['pd3source']);
+		if($pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Engineer' || $pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Knowledge' || $pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Tool' || $pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Document'){
+					$dunit['pd3type1'] = 'pd3:SubstanceFlow';
+					}
+			}	
+		
+		
 		$putTurtle .= $mprefix.":".$dunit['pd3id']." a ".$dunit['pd3type1'].";\n";
 		if($dunit['pd3type2']){$putTurtle .= "  ".$dunit['pd3type2'].";\n";}
 
@@ -785,9 +798,9 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 		$altOutput_array = array();
 		$altOutput_array = array_column($pd3xmlData,'pd3source');
 		$altOutput_result = array_keys($altOutput_array,$dunit['pd3id']);
-		//$putTurtle .= "  pd3:containerOutput \"".$mprefix.":".$pd3xmlData[$altOutput_result[0]]['pd3id']."\";\n";
 		$putTurtle .= "  pd3:contraction ".$mprefix.":".$pd3xmlData[$altOutput_result[0]]['pd3target'].";\n";
-	
+						if(!$pd3xmlData[$altOutput_result[0]]['pd3target']){
+							$putTurtle .= "#warning : please check pd3:contraction(arc : no target or no source) \n";}	
 		}
 	
 	
@@ -804,7 +817,7 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 		
 		#value、Flowがparentのvalue探し
 		if($dunit['pd3value'] != ""){$putTurtle .= "  pd3:value \"\"\"".htmlspecialchars($dunit['pd3value'])."\"\"\";\n";}
-		elseif(!$dunit['pd3value']  && ($dunit['pd3type1']=="pd3:Flow" ||  $dunit['pd3type1']=="pd3:ContainerFlow" || $dunit['pd3type1']=="pd3:SupFlow" || $dunit['pd3type1']=="pd3:AnnotationFlow" || $dunit['pd3type1']=="pd3:IntentionFlow" || $dunit['pd3type1']=="pd3:RationaleFlow"|| $dunit['pd3type1']=="pd3:SubjectFlow")){
+		elseif(!$dunit['pd3value']  && ($dunit['pd3type1']=="pd3:Flow" ||  $dunit['pd3type1']=="pd3:ContainerFlow" || $dunit['pd3type1']=="pd3:SupFlow" || $dunit['pd3type1']=="pd3:ControlFlow" || $dunit['pd3type1']=="pd3:ControlFlow" || $dunit['pd3type1']=="pd3:ControlFlow"|| $dunit['pd3type1']=="pd3:SubstanceFlow")){
 		$valueArray = array();
 		$valuetext="";
 		$valueArray =  array_column($pd3xmlData,'pd3parent');
@@ -830,17 +843,29 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 				$input_string .= "  pd3:input ";
 				for($i=0;$i<count($inputResult);$i++){
 					$formerActionid = $pd3xmlData[$inputResult[$i]]['pd3source']; 
-					//ContainerInput追加
+
 					$formerActionArray = array_column($pd3xmlData,'pd3id');
 					$formerActionResult = array_keys($formerActionArray,$pd3xmlData[$inputResult[$i]]['pd3source']);
+					//以下ContainerInput追加
 					if($pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Container'){
 					$putTurtle .= "  pd3:expansion ".$mprefix.":".$pd3xmlData[$formerActionResult[0]]['pd3id'].";\n";
-					//$putTurtle .= "  pd3:containerInput ".$mprefix.":".$pd3xmlData[$inputResult[$i]]['pd3id'].";\n";
-
+					//以下isSupportedBy追加
+					}elseif($pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Tool' || $pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Engineer' || $pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Knowledge' || $pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Document' || $pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Substance'){
+					if($pd3xmlData[$formerActionResult[0]]['pd3id']){	
+					$putTurtle .= "  pd3:isSupportedBy ".$mprefix.":".$pd3xmlData[$formerActionResult[0]]['pd3id'].";\n";
 					}
-			
-					$input_string .= $mprefix.":".$pd3xmlData[$inputResult[$i]]['pd3id'];
-					if($i<count($inputResult)-1){$input_string .= ",";}
+					//以下isControlledBy追加
+					}elseif($pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Intention' || $pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Rationale' || $pd3xmlData[$formerActionResult[0]]['pd3type1']=='pd3:Annotation'){
+					if($pd3xmlData[$formerActionResult[0]]['pd3id']){	
+					$putTurtle .= "  pd3:isControlledBy ".$mprefix.":".$pd3xmlData[$formerActionResult[0]]['pd3id'].";\n";
+					}
+					}else{
+						if(substr_count($input_string,':') > 1){
+							$input_string .= ",".$mprefix.":".$pd3xmlData[$inputResult[$i]]['pd3id'];
+						}else{
+							$input_string .= $mprefix.":".$pd3xmlData[$inputResult[$i]]['pd3id'];						
+						}
+					}
 				}				
 				$input_string=$input_string.";\n";
 				}				
@@ -866,14 +891,55 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 		#altInput,
 		}//actionのend
 		
+		#supportの場合
+		if($dunit['pd3type1'] == 'pd3:Substance' || $dunit['pd3type1'] == 'pd3:Tool'  || $dunit['pd3type1'] == 'pd3:Document' || $dunit['pd3type1'] == 'pd3:Engineer'  || $dunit['pd3type1'] == 'pd3:Knowledge'){
+			$support_string="";
+			$supportArray = array();
+			$supportArray = array_column($pd3xmlData,'pd3source');
+			$supportResult = array_keys($supportArray,$dunit['pd3id']);
+			if(count($supportResult) > 0){
+
+					for($i=0;$i<count($supportResult);$i++){
+						$formerSupportArray = array_column($pd3xmlData,'pd3id');
+						$formerSupportResult = array_keys($formerSupportArray,$pd3xmlData[$supportResult[$i]]['pd3target']);			
+						if($pd3xmlData[$formerSupportResult[0]]['pd3id']){
+						$putTurtle .= "  pd3:support ".$mprefix.":".$pd3xmlData[$formerSupportResult[0]]['pd3id'].";\n";
+						}
+						
+						if(!$pd3xmlData[$formerSupportResult[0]]['pd3id']){
+							$putTurtle .= "#warning : please check pd3:support(arc : no target or no source) \n";}
+					}
+			}
+		}//supportのend
+
+		#controlの場合
+		if($dunit['pd3type1'] == 'pd3:Annotation' || $dunit['pd3type1'] == 'pd3:Intention'  || $dunit['pd3type1'] == 'pd3:Rationale'){
+			$control_string="";
+			$controlArray = array();
+			$controlArray = array_column($pd3xmlData,'pd3source');
+			$controlResult = array_keys($controlArray,$dunit['pd3id']);
+			if(count($controlResult) > 0){
+					for($i=0;$i<count($controlResult);$i++){
+						$formerControlArray = array_column($pd3xmlData,'pd3id');
+						$formerControlResult = array_keys($formerControlArray,$pd3xmlData[$controlResult[$i]]['pd3target']);
+						if($pd3xmlData[$formerControlResult[0]]['pd3id']){			
+						$putTurtle .= "  pd3:control ".$mprefix.":".$pd3xmlData[$formerControlResult[0]]['pd3id'].";\n";
+						}
+						if(!$pd3xmlData[$formerControlResult[0]]['pd3id']){
+							$putTurtle .= "#warning : please check pd3:control(arc : no target or no source) \n";}
+					}
+			}
+		}//controlのend
 
 
-		if($dunit['pd3type1']== 'pd3:Flow' || $dunit['pd3type1']== 'pd3:ContainerFlow' || $dunit['pd3type1']== 'pd3:SubjectFlow'){
+
+		#error探し
+		if($dunit['pd3type1']== 'pd3:Flow' || $dunit['pd3type1']== 'pd3:ContainerFlow' || $dunit['pd3type1']== 'pd3:SubstanceFlow'){
 			if($dunit['pd3source']==''){$nosource=1;} //nosource?
 			if($dunit['pd3target']==''){$notarget=1;} //notarget?
 		}
 
-		if($dunit['pd3type1']=="pd3:AnnotationFlow" || $dunit['pd3type1']=="pd3:IntentionFlow" || $dunit['pd3type1']=="pd3:RationaleFlow"){
+		if($dunit['pd3type1']=="pd3:ControlFlow" || $dunit['pd3type1']=="pd3:ControlFlow" || $dunit['pd3type1']=="pd3:ControlFlow"){
 					if($dunit['pd3target']==''){$notarget=1;} //notarget?
 		}
 
@@ -900,8 +966,8 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 
 //errorの場合	
 if($dunit['errorcheck']== '1'){
-$putTurtle .= "  # Error : Irregular XML syntax (no arctype, ".$dunit['pd3id'].") \n";
-$putTurtle .= "  # Warning : System​ inferred entity  value as ".$dunit['pd3type1'].". \n";
+//$putTurtle .= "  # Error : Irregular XML syntax (no arctype, ".$dunit['pd3id'].") \n";
+//$putTurtle .= "  # Warning : System​ inferred entity  value as ".$dunit['pd3type1'].". \n";
 }	
 if($nolayer== '1'){
 $putTurtle .= "  # Error : Irregular XML syntax (no pd3layer, ".$dunit['pd3id'].") \n";
@@ -925,7 +991,7 @@ $putTurtle .= "  # Error : Irregular XML syntax \n";
 
 
 	}//foreach end
-
+	
 
 $stdout= fopen( 'php://stdout', 'w' );
 fwrite( $stdout, $putTurtle );
