@@ -192,19 +192,19 @@ foreach($PD3xml->diagram->mxGraphModel->root->UserObject as $UserObject):
 					$pd3type1="pd3:ContainerFlow";
 					$pd3type2= "pd3:arcType \"hierarchization\"";
 				}elseif($arctype == 'tool/knowledge'){
-					$pd3type1="pd3:SubjectFlow";
+					$pd3type1="pd3:SubstanceFlowFlow";
 					$pd3type2= "pd3:arcType \"tool/knowledge\"";					
 				}elseif($arctype == 'information'){
 					$pd3type1="pd3:Flow";
 					$pd3type2= "pd3:arcType \"information\"";					
 				}elseif($arctype == 'annotation'){
-					$pd3type1="pd3:AnnotationFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"annotation\"";		
 				}elseif($arctype == 'rationale'){
-					$pd3type1="pd3:RationaleFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"rationale\"";
 				}elseif($arctype == 'intention'){
-					$pd3type1="pd3:IntentionFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"intention\"";				
 				}		
 			}//arcの場合_end
@@ -420,19 +420,19 @@ foreach($PD3xml->diagram->mxGraphModel->root->object as $object):
 					$pd3type1="pd3:ContainerFlow";
 					$pd3type2= "pd3:arcType \"hierarchization\"";
 				}elseif($arctype == 'tool/knowledge'){
-					$pd3type1="pd3:SubjectFlow";
+					$pd3type1="pd3:SubstanceFlowFlow";
 					$pd3type2= "pd3:arcType \"tool/knowledge\"";					
 				}elseif($arctype == 'information'){
 					$pd3type1="pd3:Flow";
 					$pd3type2= "pd3:arcType \"information\"";					
 				}elseif($arctype == 'annotation'){
-					$pd3type1="pd3:AnnotationFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"annotation\"";		
 				}elseif($arctype == 'rationale'){
-					$pd3type1="pd3:RationaleFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"rationale\"";
 				}elseif($arctype == 'intention'){
-					$pd3type1="pd3:IntentionFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"intention\"";				
 				}		
 			}//arcの場合_end
@@ -652,19 +652,19 @@ endforeach;
 					$pd3type1="pd3:ContainerFlow";
 					$pd3type2= "pd3:arcType \"hierarchization\"";
 				}elseif($arctype == 'tool/knowledge'){
-					$pd3type1="pd3:SubjectFlow";
+					$pd3type1="pd3:SubstanceFlow";
 					$pd3type2= "pd3:arcType \"tool/knowledge\"";					
 				}elseif($arctype == 'information'){
 					$pd3type1="pd3:Flow";
 					$pd3type2= "pd3:arcType \"information\"";					
 				}elseif($arctype == 'annotation'){
-					$pd3type1="pd3:AnnotationFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"annotation\"";		
 				}elseif($arctype == 'rationale'){
-					$pd3type1="pd3:RationaleFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"rationale\"";
 				}elseif($arctype == 'intention'){
-					$pd3type1="pd3:IntentionFlow";
+					$pd3type1="pd3:ControlFlow";
 					$pd3type2= "pd3:arcType \"intention\"";				
 				}		
 			}//arcの場合_end
@@ -676,13 +676,38 @@ endforeach;
 //engineerの場合
 	if($pd3type == 'engineer'){
 										$pd3type1="pd3:Engineer";
-									}//engineerの場合_end
-									
+									}//engineerの場合_end							
 //Toolの場合
 	if($pd3type == 'tool'){
 										$pd3type1="pd3:Tool";
 									}//tool場合_end
-												
+//Knowledgeの場合
+	if($pd3type == 'knowledge'){
+										$pd3type1="pd3:Knowledge";
+									}//tool場合_end
+//Substanceの場合
+	if($pd3type == 'substance'){
+										$pd3type1="pd3:Substance";
+									}//Substanceの場合_end
+//Annotationの場合
+	if($pd3type == 'annotation'){
+										$pd3type1="pd3:Annotation";
+									}//Annotationの場合_end							
+//Intentionの場合
+	if($pd3type == 'intention'){
+										$pd3type1="pd3:Intention";
+									}//tool場合_end
+//Intentionの場合
+	if($pd3type == 'rationale'){
+										$pd3type1="pd3:Rationale";
+									}//tool場合_end
+
+//Knowledgeの場合
+	if($pd3type == 'knowledge'){
+										$pd3type1="pd3:Knowledge";
+									}//tool場合_end
+
+
 	//pd3type1の情報がない場合
 	if(!$pd3type1 && !$pd3type2 && $endArrow){
 		
@@ -762,6 +787,7 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 		$sourceArray =  array_column($pd3xmlData,'pd3id');
 		$sourceResult = array_keys($sourceArray,$dunit['pd3source']);
 		if($pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Engineer' || $pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Knowledge' || $pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Tool' || $pd3xmlData[$sourceResult[0]]['pd3type1'] == 'pd3:Document'){
+					$dunit['pd3type2'] = "pd3:arcType \"".trim(str_replace('pd3:','',$pd3xmlData[$sourceResult[0]]['pd3type1']))."\"";
 					$dunit['pd3type1'] = 'pd3:SubstanceFlow';
 					}
 			}	
@@ -798,21 +824,22 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 		$altOutput_array = array();
 		$altOutput_array = array_column($pd3xmlData,'pd3source');
 		$altOutput_result = array_keys($altOutput_array,$dunit['pd3id']);
+		if($pd3xmlData[$altOutput_result[0]]['pd3target']){
 		$putTurtle .= "  pd3:contraction ".$mprefix.":".$pd3xmlData[$altOutput_result[0]]['pd3target'].";\n";
-						if(!$pd3xmlData[$altOutput_result[0]]['pd3target']){
+		}else{
 							$putTurtle .= "#warning : please check pd3:contraction(arc : no target or no source) \n";}	
 		}
 	
-	
-		#parentがContainertypeの場合attribution追加
+	 	#parentがContainertypeの場合attribution追加
 		if($dunit['pd3parent']){
 		$attributionArray = array();
 		$attributionArray =  array_column($pd3xmlData,'pd3id');
 		$attributionResult = array_keys($attributionArray,$dunit['pd3parent']);
 		if($pd3xmlData[$attributionResult[0]]['pd3type1'] == 'pd3:Container'){
 			$putTurtle .= "  pd3:attribution ".$mprefix.":".$dunit['pd3parent'].";\n";
+			}
 		}
-		 		}
+		
 		
 		
 		#value、Flowがparentのvalue探し
@@ -829,8 +856,29 @@ if($dunit['pd3type1'] == '' && $dunit['pd3type2'] == '' && $dunit['value'] == ''
 		if($dunit['pd3parent'] != ''){
 					$putTurtle .= "  pd3:isIncludedIn ".$mprefix.":0;\n";
 					$putTurtle .= "  pd3:dparent ".$mprefix.":".$dunit['pd3parent'].";\n";
+		//parentが正しいかチェック
+		//actionにflowinputがあるのか
+		 		if($dunit['pd3type1'] == 'pd3:Action'){
+			    $parentFlowCheckArray = array();
+				$parentFlowCheckArray = array_column($pd3xmlData,'pd3target');
+				$parentFlowCheckResult = array_keys($parentFlowCheckArray,$dunit['pd3id']);
+				//flowinputがあるactionを発見
+				if(count($parentFlowCheckResult) > 0){
+					for($i=0;$i<count($parentFlowCheckResult);$i++){
+						$parentFlowCheckformerActionid = $pd3xmlData[$parentFlowCheckResult[$i]]['pd3source'];
+						//ここから一個前のobjectがactionかcontainerかを判断
+										    $parentObjectCheckArray = array();
+											$parentObjectCheckArray = array_column($pd3xmlData,'pd3id');
+											$parentObjectCheckResult = array_keys($parentObjectCheckArray,$pd3xmlData[$parentFlowCheckResult[$i]]['pd3source']);
+												if($pd3xmlData[$parentObjectCheckResult[0]]['pd3type1']=='pd3:Action' && $dunit['pd3parent'] != $pd3xmlData[$parentObjectCheckResult[0]]['pd3parent']){	
+															$putTurtle .= "#Error :  diffrent parents :  (this) ".$dunit['pd3parent']." vs (previous) ".$pd3xmlData[$parentObjectCheckResult[0]]['pd3parent'].";\n";
+												}
 
-		}
+						}
+					}
+					
+				}//actionチェック
+		}//parent end
 			
 		#actionの場合
 		if($dunit['pd3type1'] == 'pd3:Action'){
@@ -991,6 +1039,7 @@ $putTurtle .= "  # Error : Irregular XML syntax \n";
 
 
 	}//foreach end
+
 	
 
 $stdout= fopen( 'php://stdout', 'w' );
