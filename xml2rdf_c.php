@@ -1,18 +1,18 @@
 <?php
 error_reporting(0);
 
-$inputXML = file_get_contents('php://stdin');
-$xmlfilename = "./xml/temp.xml".strtotime("now");
+$xml_file_name = file_get_contents('php://stdin');
+$xmlfilename = "./temp.xml".strtotime("now");
 file_put_contents($xmlfilename, $inputXML);
 
 $PD3xml = simplexml_load_file($xmlfilename);
 $xml_file_string = file_get_contents($xmlfilename);
 
-
 $pd3xmlData = array();
 $mModified = $PD3xml -> attributes() -> modified;
 $mDiagramName = $PD3xml -> diagram -> attributes() -> name;
 $mDiagramID = $PD3xml -> diagram -> attributes() -> id;
+
 
 //UserObjectタグの場合
 foreach($PD3xml->diagram->mxGraphModel->root->UserObject as $UserObject):
@@ -1040,10 +1040,9 @@ $putTurtle .= "  # Error : Irregular XML syntax \n";
 
 	}//foreach end
 
-	
-
 $stdout= fopen( 'php://stdout', 'w' );
 fwrite( $stdout, $putTurtle );
-array_map('unlink', glob('ttl/*.*')); 
+array_map('unlink', glob('./'.$xmlfilename)); 
 unlink($xmlfilename);
+
 ?>
